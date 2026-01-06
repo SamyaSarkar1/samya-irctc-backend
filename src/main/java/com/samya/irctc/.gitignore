@@ -1,20 +1,6 @@
-# IntelliJ IDEA
 .idea/
-*.iml
-
-# Build folders
-/build/
-out/
-
-# Gradle
 .gradle/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Env / secrets
-.env
+build/
+out/
+*.iml
+.smarttomcat/
