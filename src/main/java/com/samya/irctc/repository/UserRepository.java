@@ -1,25 +1,21 @@
 package com.samya.irctc.repository;
 
 import com.samya.irctc.model.User;
-import com.samya.irctc.util.DBUtil;
+import com.samya.irctc.util.DBConnection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 public class UserRepository {
 
-    // 🔐 LOGIN
-    public User findByEmailAndPassword(String email, String password) {
 
-        String sql = "SELECT * FROM users WHERE email=? AND password=?";
+    public User findByEmail(String email) {
 
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "SELECT * FROM users WHERE email = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, email);
-            ps.setString(2, password);
-
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
@@ -27,44 +23,51 @@ public class UserRepository {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("email"),
-                        rs.getString("password"),
-                        rs.getTimestamp("created_at")
+                        rs.getString("password")
                 );
             }
-            return null;
 
         } catch (Exception e) {
-            throw new RuntimeException("Login failed", e);
+            e.printStackTrace();
         }
+
+        return null;
     }
 
-    // 📝 REGISTER
-    public User save(User user) {
 
-        String sql = "INSERT INTO users(name, email, password) VALUES (?, ?, ?)";
+    public User save(String name, String email, String hashedPassword) {
 
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+        String sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
 
-            ps.setString(1, user.getName());
-            ps.setString(2, user.getEmail());
-            ps.setString(3, user.getPassword());
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps =
+                     conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, name);
+            ps.setString(2, email);
+            ps.setString(3, hashedPassword);
 
             ps.executeUpdate();
 
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
-                user.setId(rs.getInt(1));
+                return new User(
+                        rs.getInt(1),
+                        name,
+                        email,
+                        hashedPassword
+                );
             }
 
-            return user;
-
         } catch (Exception e) {
-            throw new RuntimeException("User registration failed", e);
+            e.printStackTrace();
         }
+
+        return null;
     }
 }
+
+
 
 
 

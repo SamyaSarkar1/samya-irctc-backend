@@ -1,7 +1,7 @@
 package com.samya.irctc.repository;
 
 import com.samya.irctc.model.Train;
-import com.samya.irctc.util.DBUtil;
+import com.samya.irctc.util.DBConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,7 +15,7 @@ public class TrainRepository {
 
         List<Train> trains = new ArrayList<>();
 
-        //  Case-insensitive & trimmed matching (VERY IMPORTANT)
+
         String sql = """
                 SELECT train_no, train_name, source, destination
                 FROM trains
@@ -23,7 +23,7 @@ public class TrainRepository {
                   AND LOWER(TRIM(destination)) = LOWER(TRIM(?))
                 """;
 
-        try (Connection conn = DBUtil.getConnection();
+        try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, source);
@@ -32,7 +32,7 @@ public class TrainRepository {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                // ✅ Works with no-arg constructor
+
                 Train train = new Train();
                 train.setTrainNo(rs.getInt("train_no"));
                 train.setTrainName(rs.getString("train_name"));
@@ -43,7 +43,7 @@ public class TrainRepository {
             }
 
         } catch (Exception e) {
-            //  Proper error visibility
+
             e.printStackTrace();
             throw new RuntimeException("Failed to fetch trains from database", e);
         }

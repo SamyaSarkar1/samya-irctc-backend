@@ -7,11 +7,11 @@ public class Train {
     private String source;
     private String destination;
 
-    // REQUIRED no-arg constructor (VERY IMPORTANT)
+
     public Train() {
     }
 
-    // Optional constructor
+
     public Train(int trainNo, String trainName, String source, String destination) {
         this.trainNo = trainNo;
         this.trainName = trainName;

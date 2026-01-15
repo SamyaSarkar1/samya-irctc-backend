@@ -1,40 +1,23 @@
 package com.samya.irctc.repository;
 
 import com.samya.irctc.model.Booking;
-import com.samya.irctc.util.DBUtil;
+import com.samya.irctc.util.DBConnection;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BookingRepository {
 
-    // 🔁 CHECK DUPLICATE BOOKING
-    public boolean exists(int userId, int trainId) {
 
-        String sql = "SELECT id FROM bookings WHERE user_id=? AND train_id=?";
-
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, userId);
-            ps.setInt(2, trainId);
-
-            ResultSet rs = ps.executeQuery();
-            return rs.next();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // ➕ CREATE BOOKING
-    public Booking save(int userId, int trainId) {
+    public Booking create(int userId, int trainId) {
 
         String sql = "INSERT INTO bookings (user_id, train_id) VALUES (?, ?)";
 
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, userId);
             ps.setInt(2, trainId);
@@ -45,61 +28,81 @@ public class BookingRepository {
                 return new Booking(
                         rs.getInt(1),
                         userId,
-                        trainId,
-                        new Timestamp(System.currentTimeMillis())
+                        trainId
                 );
             }
 
-            return null;
-
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
+        return null;
     }
 
-    // 📄 GET BOOKINGS BY USER
-    public List<Booking> findByUser(int userId) {
 
-        List<Booking> list = new ArrayList<>();
-        String sql = "SELECT * FROM bookings WHERE user_id=?";
+    public Booking findById(int bookingId) {
 
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "SELECT * FROM bookings WHERE id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new Booking(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getInt("train_id")
+                );
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public List<Booking> findByUserId(int userId) {
+
+        List<Booking> bookings = new ArrayList<>();
+        String sql = "SELECT * FROM bookings WHERE user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                list.add(new Booking(
+                bookings.add(new Booking(
                         rs.getInt("id"),
                         rs.getInt("user_id"),
-                        rs.getInt("train_id"),
-                        rs.getTimestamp("booking_date")
+                        rs.getInt("train_id")
                 ));
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-
-        return list;
+        return bookings;
     }
 
-    // ❌ DELETE BOOKING
-    public boolean delete(int bookingId) {
 
-        String sql = "DELETE FROM bookings WHERE id=?";
+    public boolean deleteById(int bookingId) {
 
-        try (Connection con = DBUtil.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "DELETE FROM bookings WHERE id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, bookingId);
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
+        return false;
     }
 }
-
-

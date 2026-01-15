@@ -1,98 +1,99 @@
 package com.samya.irctc.controller.api;
 
-import com.google.gson.Gson;
 import com.samya.irctc.model.User;
 import com.samya.irctc.service.UserService;
+import com.samya.irctc.exception.DuplicateEmailException;
+import com.samya.irctc.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-@WebServlet("/api/users/*")
+@WebServlet("/api/user")
 public class UserServlet extends HttpServlet {
 
-    private final UserService service = new UserService();
-    private final Gson gson = new Gson();
+    private final UserService userService = new UserService();
+    private final ObjectMapper mapper = new ObjectMapper();
+
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
 
         resp.setContentType("application/json");
-        String path = req.getPathInfo(); // /register or /login
 
-        // ================= REGISTER =================
-        if ("/register".equals(path)) {
+        User inputUser = mapper.readValue(req.getInputStream(), User.class);
 
-            String name = req.getParameter("name");
-            String email = req.getParameter("email");
-            String password = req.getParameter("password");
+        try {
+            User createdUser = userService.register(
+                    inputUser.getName(),
+                    inputUser.getEmail(),
+                    inputUser.getPassword()
+            );
 
-            if (name == null || email == null || password == null) {
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Missing parameters\"}");
-                return;
-            }
+            resp.setStatus(HttpServletResponse.SC_CREATED);
 
-            try {
-                User user = new User();
-                user.setName(name);
-                user.setEmail(email);
-                user.setPassword(password);
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", createdUser.getId());
+            response.put("name", createdUser.getName());
+            response.put("email", createdUser.getEmail());
 
-                User savedUser = service.register(user);
+            mapper.writeValue(resp.getOutputStream(), response);
 
-                // 🔐 hide password in response
-                savedUser.setPassword(null);
-
-                resp.getWriter().write(gson.toJson(savedUser));
-
-            } catch (RuntimeException e) {
-
-                if ("EMAIL_ALREADY_EXISTS".equals(e.getMessage())) {
-                    resp.setStatus(HttpServletResponse.SC_CONFLICT); // 409
-                    resp.getWriter().write("{\"error\":\"Email already registered\"}");
-                } else {
-                    resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    resp.getWriter().write("{\"error\":\"User registration failed\"}");
-                }
-            }
-        }
-
-        // ================= LOGIN =================
-        else if ("/login".equals(path)) {
-
-            String email = req.getParameter("email");
-            String password = req.getParameter("password");
-
-            if (email == null || password == null) {
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Missing parameters\"}");
-                return;
-            }
-
-            User user = service.login(email, password);
-
-            if (user == null) {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                resp.getWriter().write("{\"error\":\"Invalid email or password\"}");
-                return;
-            }
-
-            // 🔐 hide password
-            user.setPassword(null);
-
-            resp.getWriter().write(gson.toJson(user));
-        }
-
-        // ================= INVALID =================
-        else {
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            resp.getWriter().write("{\"error\":\"Invalid endpoint\"}");
+        } catch (DuplicateEmailException e) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            mapper.writeValue(resp.getOutputStream(),
+                    Map.of("error", "Email already exists"));
         }
     }
+
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        resp.setContentType("application/json");
+
+        String email = req.getParameter("email");
+        String password = req.getParameter("password");
+
+        if (email == null || password == null) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            mapper.writeValue(resp.getOutputStream(),
+                    Map.of("error", "Email and password required"));
+            return;
+        }
+
+        User user = userService.login(email, password);
+
+        if (user == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            mapper.writeValue(resp.getOutputStream(),
+                    Map.of("error", "Invalid email or password"));
+            return;
+        }
+
+
+        String token = JwtUtil.generateToken(user.getId(), user.getEmail());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("user", Map.of(
+                "id", user.getId(),
+                "name", user.getName(),
+                "email", user.getEmail()
+        ));
+
+        mapper.writeValue(resp.getOutputStream(), response);
+    }
 }
+
+
+
+
 
 
 

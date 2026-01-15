@@ -3,70 +3,104 @@ package com.samya.irctc.controller.api;
 import com.google.gson.Gson;
 import com.samya.irctc.model.Booking;
 import com.samya.irctc.service.BookingService;
+import com.samya.irctc.util.JwtUtil;
 
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
-@WebServlet("/api/bookings/*")
+@WebServlet("/api/bookings")
 public class BookingServlet extends HttpServlet {
 
-    private final BookingService service = new BookingService();
+    private final BookingService bookingService = new BookingService();
     private final Gson gson = new Gson();
 
+
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
 
         resp.setContentType("application/json");
-        String path = req.getPathInfo(); // /create /user /delete
 
-        // ➕ CREATE BOOKING
-        if ("/create".equals(path)) {
+        try {
 
-            int userId = Integer.parseInt(req.getParameter("userId"));
-            int trainId = Integer.parseInt(req.getParameter("trainId"));
+            int userId = JwtUtil.getUserIdFromRequest(req);
 
-            Booking booking = service.createBooking(userId, trainId);
 
-            if (booking == null) {
-                resp.setStatus(HttpServletResponse.SC_CONFLICT);
-                resp.getWriter().write("{\"error\":\"Booking already exists\"}");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> body =
+                    gson.fromJson(req.getReader(), Map.class);
+
+            if (body == null || !body.containsKey("trainId")) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write("{\"error\":\"trainId is required\"}");
                 return;
             }
 
-            resp.getWriter().write(gson.toJson(booking));
+            int trainId = ((Number) body.get("trainId")).intValue();
+
+
+            Booking booking =
+                    bookingService.createBooking(userId, trainId);
+
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            gson.toJson(booking, resp.getWriter());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Invalid request\"}");
         }
+    }
 
-        // 📄 GET USER BOOKINGS
-        else if ("/user".equals(path)) {
 
-            int userId = Integer.parseInt(req.getParameter("userId"));
-            List<Booking> bookings = service.getBookingsByUser(userId);
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
 
-            resp.getWriter().write(gson.toJson(bookings));
+        resp.setContentType("application/json");
+
+        try {
+            int userId = JwtUtil.getUserIdFromRequest(req);
+            gson.toJson(
+                    bookingService.getBookingsByUser(userId),
+                    resp.getWriter()
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"error\":\"Unauthorized\"}");
         }
+    }
 
-        // ❌ DELETE BOOKING
-        else if ("/delete".equals(path)) {
 
-            int bookingId = Integer.parseInt(req.getParameter("bookingId"));
-            boolean deleted = service.deleteBooking(bookingId);
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+
+        resp.setContentType("application/json");
+
+        try {
+            int userId = JwtUtil.getUserIdFromRequest(req);
+            int bookingId = Integer.parseInt(req.getParameter("id"));
+
+            boolean deleted =
+                    bookingService.deleteBooking(userId, bookingId);
 
             if (deleted) {
-                resp.getWriter().write("{\"message\":\"Booking deleted successfully\"}");
+                resp.getWriter().write("{\"message\":\"Booking cancelled\"}");
             } else {
-                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                resp.getWriter().write("{\"error\":\"Booking not found\"}");
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                resp.getWriter().write("{\"error\":\"Not allowed\"}");
             }
-        }
 
-        // ❌ INVALID
-        else {
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            resp.getWriter().write("{\"error\":\"Invalid endpoint\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Invalid request\"}");
         }
     }
 }
-
-

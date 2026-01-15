@@ -7,28 +7,32 @@ import java.util.List;
 
 public class BookingService {
 
-    private final BookingRepository repository = new BookingRepository();
+    private final BookingRepository bookingRepository = new BookingRepository();
 
-    // ➕ CREATE WITH DUPLICATE CHECK
+
     public Booking createBooking(int userId, int trainId) {
+        return bookingRepository.create(userId, trainId);
+    }
 
-        if (repository.exists(userId, trainId)) {
-            return null; // duplicate
+
+    public List<Booking> getBookingsByUser(int userId) {
+        return bookingRepository.findByUserId(userId);
+    }
+
+
+    public boolean deleteBooking(int userId, int bookingId) {
+
+        Booking booking = bookingRepository.findById(bookingId);
+
+        if (booking == null) {
+            return false;
         }
 
-        return repository.save(userId, trainId);
-    }
 
-    // 📄 USER BOOKINGS
-    public List<Booking> getBookingsByUser(int userId) {
-        return repository.findByUser(userId);
-    }
+        if (booking.getUserId() != userId) {
+            return false;
+        }
 
-    // ❌ DELETE
-    public boolean deleteBooking(int bookingId) {
-        return repository.delete(bookingId);
+        return bookingRepository.deleteById(bookingId);
     }
 }
-
-
-
