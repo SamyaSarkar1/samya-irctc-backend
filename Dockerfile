@@ -9,4 +9,5 @@ RUN ./gradlew clean build
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "build/libs/*.war"]
+CMD ["sh", "-c", "java -jar build/libs/*.war"]
+
