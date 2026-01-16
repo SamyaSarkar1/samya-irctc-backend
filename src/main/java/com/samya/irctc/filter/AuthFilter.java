@@ -1,7 +1,5 @@
 package com.samya.irctc.filter;
 
-import com.samya.irctc.util.JwtUtil;
-
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
@@ -18,27 +16,18 @@ public class AuthFilter implements Filter {
             throws IOException, ServletException {
 
         HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse resp = (HttpServletResponse) response;
+        HttpServletResponse res = (HttpServletResponse) response;
 
-        String path = req.getRequestURI();
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        res.setHeader("Access-Control-Max-Age", "3600");
 
-
-        if (path.endsWith("/api/user")) {
-            chain.doFilter(request, response);
+        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            res.setStatus(HttpServletResponse.SC_OK);
             return;
         }
 
-        try {
-
-            JwtUtil.getUserIdFromRequest(req);
-
-
-            chain.doFilter(request, response);
-
-        } catch (Exception e) {
-            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            resp.setContentType("application/json");
-            resp.getWriter().write("{\"error\":\"Unauthorized - Invalid Token\"}");
-        }
+        chain.doFilter(request, response);
     }
 }
