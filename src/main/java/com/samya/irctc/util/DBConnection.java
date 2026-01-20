@@ -7,8 +7,6 @@ public class DBConnection {
 
     public static Connection getConnection() {
         try {
-            Class.forName("org.postgresql.Driver");
-
             String url = System.getenv("DB_URL");
             String user = System.getenv("DB_USER");
             String password = System.getenv("DB_PASSWORD");
@@ -17,11 +15,12 @@ public class DBConnection {
                 throw new RuntimeException("Database environment variables not set");
             }
 
+            Class.forName("org.postgresql.Driver");
             return DriverManager.getConnection(url, user, password);
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Database connection failed", e);
+            throw new RuntimeException("Database connection failed");
         }
     }
 }
