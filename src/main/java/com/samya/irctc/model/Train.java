@@ -12,8 +12,6 @@ public class Train {
     private int totalSeats;
     private int availableSeats;
 
-    public Train() {}
-
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

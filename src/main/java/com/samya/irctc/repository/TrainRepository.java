@@ -12,6 +12,7 @@ import java.util.List;
 public class TrainRepository {
 
     public List<Train> findTrains(String source, String destination) {
+
         List<Train> trains = new ArrayList<>();
 
         String sql = """
@@ -46,7 +47,7 @@ public class TrainRepository {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to fetch trains from database");
+            throw new RuntimeException(e);
         }
 
         return trains;
