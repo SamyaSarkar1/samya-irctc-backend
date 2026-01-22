@@ -5,18 +5,26 @@ import java.sql.DriverManager;
 
 public class DBConnection {
 
-    public static Connection getConnection() {
+    private static final String URL =
+            "jdbc:postgresql://<HOST>:5432/<DB_NAME>?currentSchema=samya_irctc";
+
+    private static final String USER = "<DB_USER>";
+    private static final String PASSWORD = "<DB_PASSWORD>";
+
+    static {
         try {
             Class.forName("org.postgresql.Driver");
-
-            return DriverManager.getConnection(
-                    System.getenv("DB_URL"),
-                    System.getenv("DB_USER"),
-                    System.getenv("DB_PASSWORD")
-            );
-
         } catch (Exception e) {
-            throw new RuntimeException("Database connection failed", e);
+            e.printStackTrace();
+        }
+    }
+
+    public static Connection getConnection() {
+        try {
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Database connection failed");
         }
     }
 }
