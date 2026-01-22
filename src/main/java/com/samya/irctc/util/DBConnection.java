@@ -6,14 +6,19 @@ import java.sql.DriverManager;
 public class DBConnection {
 
     public static Connection getConnection() {
-        try {
-            String dbUrl = System.getenv("DATABASE_URL");
 
-            if (dbUrl == null || dbUrl.isEmpty()) {
-                throw new RuntimeException("DATABASE_URL not found in environment variables");
+        try {
+            String databaseUrl = System.getenv("DATABASE_URL");
+
+            if (databaseUrl == null) {
+                throw new RuntimeException("DATABASE_URL not set");
             }
 
-            return DriverManager.getConnection(dbUrl);
+            // Convert Render URL → JDBC URL
+            // postgres://user:pass@host:5432/db
+            databaseUrl = databaseUrl.replace("postgres://", "jdbc:postgresql://");
+
+            return DriverManager.getConnection(databaseUrl);
 
         } catch (Exception e) {
             e.printStackTrace();
