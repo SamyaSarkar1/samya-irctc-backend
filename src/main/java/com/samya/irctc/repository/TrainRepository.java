@@ -18,7 +18,7 @@ public class TrainRepository {
         String sql = """
             SELECT id, train_no, train_name, source, destination,
                    departure_time, arrival_time, total_seats, available_seats
-            FROM public.trains
+            FROM samya_irctc.trains
             WHERE source = ? AND destination = ?
         """;
 
