@@ -12,20 +12,17 @@ import java.util.List;
 public class TrainRepository {
 
     public List<Train> findTrains(String source, String destination) {
-
         List<Train> trains = new ArrayList<>();
 
         String sql = """
             SELECT id, train_no, train_name, source, destination,
                    departure_time, arrival_time, total_seats, available_seats
-            FROM public.trains
+            FROM samya_irctc.trains
             WHERE source = ? AND destination = ?
         """;
 
-        try (
-                Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
-        ) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, source.toUpperCase());
             ps.setString(2, destination.toUpperCase());
@@ -49,7 +46,7 @@ public class TrainRepository {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to fetch trains from database", e);
+            throw new RuntimeException("Failed to fetch trains from database");
         }
 
         return trains;
