@@ -18,7 +18,7 @@ public class TrainRepository {
         String sql = """
             SELECT id, train_no, train_name, source, destination,
                    departure_time, arrival_time, total_seats, available_seats
-            FROM samya_irctc.trains
+            FROM public.trains
             WHERE source = ? AND destination = ?
         """;
 
@@ -47,7 +47,7 @@ public class TrainRepository {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to fetch trains from database");
         }
 
         return trains;
