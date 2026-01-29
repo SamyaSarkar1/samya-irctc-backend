@@ -18,12 +18,14 @@ public class TrainRepository {
         String sql = """
             SELECT id, train_no, train_name, source, destination,
                    departure_time, arrival_time, total_seats, available_seats
-            FROM samya_irctc.trains
+            FROM trains
             WHERE source = ? AND destination = ?
         """;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (
+                Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
 
             ps.setString(1, source.toUpperCase());
             ps.setString(2, destination.toUpperCase());

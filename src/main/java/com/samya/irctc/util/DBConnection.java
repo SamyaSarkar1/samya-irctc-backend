@@ -2,25 +2,27 @@ package com.samya.irctc.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DBConnection {
 
+    private static Connection connection;
+
     public static Connection getConnection() {
-
         try {
-            String databaseUrl = System.getenv("DATABASE_URL");
+            if (connection == null || connection.isClosed()) {
 
-            if (databaseUrl == null) {
-                throw new RuntimeException("DATABASE_URL not set");
+                String databaseUrl = System.getenv("DATABASE_URL");
+
+                if (databaseUrl == null || databaseUrl.isEmpty()) {
+                    throw new RuntimeException("DATABASE_URL environment variable not set");
+                }
+
+                connection = DriverManager.getConnection(databaseUrl);
             }
+            return connection;
 
-            // Convert Render URL → JDBC URL
-            // postgres://user:pass@host:5432/db
-            databaseUrl = databaseUrl.replace("postgres://", "jdbc:postgresql://");
-
-            return DriverManager.getConnection(databaseUrl);
-
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Database connection failed");
         }
