@@ -1,6 +1,5 @@
 package com.samya.irctc.util;
 
-import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -8,24 +7,30 @@ public class DBConnection {
 
     public static Connection getConnection() {
         try {
-            String databaseUrl = System.getenv("DATABASE_URL");
+            String rawUrl = System.getenv("DATABASE_URL");
 
-            if (databaseUrl == null || databaseUrl.isEmpty()) {
-                throw new RuntimeException("DATABASE_URL not set in environment");
+            if (rawUrl == null || rawUrl.isEmpty()) {
+                throw new RuntimeException("DATABASE_URL not set");
             }
 
-            URI dbUri = new URI(databaseUrl);
+            // Convert Render URL → JDBC URL
+            rawUrl = rawUrl.replace("postgresql://", "");
 
-            String userInfo = dbUri.getUserInfo(); // user:password
-            String username = userInfo.split(":")[0];
-            String password = userInfo.split(":")[1];
+            String[] parts = rawUrl.split("@");
+            String[] creds = parts[0].split(":");
+            String[] hostDb = parts[1].split("/");
 
-            String jdbcUrl = "jdbc:postgresql://" +
-                    dbUri.getHost() + ":" +
-                    dbUri.getPort() +
-                    dbUri.getPath();
+            String user = creds[0];
+            String password = creds[1];
+            String host = hostDb[0];
+            String db = hostDb[1];
 
-            return DriverManager.getConnection(jdbcUrl, username, password);
+            String jdbcUrl =
+                    "jdbc:postgresql://" + host + "/" + db +
+                            "?user=" + user + "&password=" + password;
+
+            Class.forName("org.postgresql.Driver");
+            return DriverManager.getConnection(jdbcUrl);
 
         } catch (Exception e) {
             e.printStackTrace();
