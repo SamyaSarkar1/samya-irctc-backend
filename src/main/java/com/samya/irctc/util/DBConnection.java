@@ -1,5 +1,6 @@
 package com.samya.irctc.util;
 
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -10,22 +11,21 @@ public class DBConnection {
             String databaseUrl = System.getenv("DATABASE_URL");
 
             if (databaseUrl == null || databaseUrl.isEmpty()) {
-                throw new RuntimeException("DATABASE_URL not found");
+                throw new RuntimeException("DATABASE_URL not set in environment");
             }
 
-            // Example Render URL:
-            // postgres://user:password@host:5432/dbname
-            databaseUrl = databaseUrl.replace("postgres://", "jdbc:postgresql://");
+            URI dbUri = new URI(databaseUrl);
 
-            // Render requires SSL
-            if (!databaseUrl.contains("?")) {
-                databaseUrl += "?sslmode=require";
-            } else {
-                databaseUrl += "&sslmode=require";
-            }
+            String userInfo = dbUri.getUserInfo(); // user:password
+            String username = userInfo.split(":")[0];
+            String password = userInfo.split(":")[1];
 
-            Class.forName("org.postgresql.Driver");
-            return DriverManager.getConnection(databaseUrl);
+            String jdbcUrl = "jdbc:postgresql://" +
+                    dbUri.getHost() + ":" +
+                    dbUri.getPort() +
+                    dbUri.getPath();
+
+            return DriverManager.getConnection(jdbcUrl, username, password);
 
         } catch (Exception e) {
             e.printStackTrace();
