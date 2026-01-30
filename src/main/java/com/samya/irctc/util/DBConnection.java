@@ -5,27 +5,24 @@ import java.sql.DriverManager;
 
 public class DBConnection {
 
-    private static final String URL = System.getenv("DB_URL");
-    private static final String USER = System.getenv("DB_USER");
-    private static final String PASSWORD = System.getenv("DB_PASSWORD");
-
-    static {
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("PostgreSQL Driver not found", e);
-        }
-    }
-
     public static Connection getConnection() {
         try {
-            if (URL == null || USER == null || PASSWORD == null) {
-                throw new RuntimeException("Database environment variables not set");
-            }
-            return DriverManager.getConnection(URL, USER, PASSWORD);
+            String url = System.getenv("DB_URL");
+            String user = System.getenv("DB_USER");
+            String password = System.getenv("DB_PASSWORD");
+
+            System.out.println("🔍 DB_URL = " + url);
+            System.out.println("🔍 DB_USER = " + user);
+            System.out.println("🔍 DB_PASSWORD is set = " + (password != null));
+
+            Class.forName("org.postgresql.Driver");
+
+            return DriverManager.getConnection(url, user, password);
+
         } catch (Exception e) {
+            System.out.println(" DATABASE CONNECTION FAILED");
             e.printStackTrace();
-            throw new RuntimeException("Database connection failed");
+            throw new RuntimeException("Database connection failed", e);
         }
     }
 }
