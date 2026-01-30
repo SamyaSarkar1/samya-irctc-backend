@@ -5,33 +5,24 @@ import java.sql.DriverManager;
 
 public class DBConnection {
 
+    private static final String URL = System.getenv("DB_URL");
+    private static final String USER = System.getenv("DB_USER");
+    private static final String PASSWORD = System.getenv("DB_PASSWORD");
+
+    static {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("PostgreSQL Driver not found", e);
+        }
+    }
+
     public static Connection getConnection() {
         try {
-            String rawUrl = System.getenv("DATABASE_URL");
-
-            if (rawUrl == null || rawUrl.isEmpty()) {
-                throw new RuntimeException("DATABASE_URL not set");
+            if (URL == null || USER == null || PASSWORD == null) {
+                throw new RuntimeException("Database environment variables not set");
             }
-
-            // Convert Render URL → JDBC URL
-            rawUrl = rawUrl.replace("postgresql://", "");
-
-            String[] parts = rawUrl.split("@");
-            String[] creds = parts[0].split(":");
-            String[] hostDb = parts[1].split("/");
-
-            String user = creds[0];
-            String password = creds[1];
-            String host = hostDb[0];
-            String db = hostDb[1];
-
-            String jdbcUrl =
-                    "jdbc:postgresql://" + host + "/" + db +
-                            "?user=" + user + "&password=" + password;
-
-            Class.forName("org.postgresql.Driver");
-            return DriverManager.getConnection(jdbcUrl);
-
+            return DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Database connection failed");
