@@ -14,7 +14,8 @@ public class TrainRepository {
     public List<Train> findTrains(String source, String destination) {
         List<Train> trains = new ArrayList<>();
 
-        String sql = "SELECT * FROM trains WHERE source = ? AND destination = ?";
+        String sql = "SELECT * FROM samya_irctc.trains WHERE source = ? AND destination = ?";
+        ;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
