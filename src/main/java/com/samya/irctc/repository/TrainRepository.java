@@ -12,21 +12,13 @@ import java.util.List;
 public class TrainRepository {
 
     public List<Train> findTrains(String source, String destination) {
-
         List<Train> trains = new ArrayList<>();
 
-        String sql = """
-            SELECT train_no, train_name, source, destination,
-                   departure_time, arrival_time,
-                   total_seats, available_seats
-            FROM public.trains
-            WHERE source = ? AND destination = ?
-        """;
+        String sql = "SELECT * FROM trains WHERE source = ? AND destination = ?";
 
-        try (
-                Connection conn = DBConnection.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
-        ) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, source);
             ps.setString(2, destination);
 
@@ -34,6 +26,7 @@ public class TrainRepository {
 
             while (rs.next()) {
                 Train train = new Train();
+                train.setId(rs.getInt("id"));
                 train.setTrainNo(rs.getInt("train_no"));
                 train.setTrainName(rs.getString("train_name"));
                 train.setSource(rs.getString("source"));
@@ -47,8 +40,8 @@ public class TrainRepository {
             }
 
         } catch (Exception e) {
-            e.printStackTrace(); // shows real error in Render logs
-            throw new RuntimeException("Failed to fetch trains from database");
+            e.printStackTrace();
+            throw new RuntimeException("Failed to fetch trains from database", e);
         }
 
         return trains;
