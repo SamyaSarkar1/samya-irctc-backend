@@ -8,6 +8,10 @@ public class UserService {
     private final UserRepository userRepository = new UserRepository();
 
     public boolean register(User user) {
-        return userRepository.register(user);
+        return userRepository.save(user);
+    }
+
+    public User login(String email, String password) {
+        return userRepository.findByEmailAndPassword(email, password);
     }
 }
