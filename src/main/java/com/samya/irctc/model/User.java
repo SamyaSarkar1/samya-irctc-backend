@@ -1,16 +1,12 @@
 package com.samya.irctc.model;
 
 public class User {
-
     private int id;
     private String name;
     private String email;
     private String password;
 
-
-    public User() {
-    }
-
+    public User() {}
 
     public User(int id, String name, String email, String password) {
         this.id = id;
@@ -19,6 +15,11 @@ public class User {
         this.password = password;
     }
 
+    public User(String name, String email, String password) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+    }
 
     public int getId() {
         return id;
@@ -52,6 +53,3 @@ public class User {
         this.password = password;
     }
 }
-
-
-
