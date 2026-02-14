@@ -9,12 +9,11 @@ import java.util.List;
 
 public class BookingRepository {
 
-
     public Booking create(int userId, int trainId) {
         String sql = "INSERT INTO bookings (user_id, train_id) VALUES (?, ?)";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, userId);
             ps.setInt(2, trainId);
@@ -31,10 +30,8 @@ public class BookingRepository {
         return null;
     }
 
-    // 🔹 Get Bookings by UserId
     public List<Booking> findByUserId(int userId) {
-        List<Booking> bookings = new ArrayList<>();
-
+        List<Booking> list = new ArrayList<>();
         String sql = "SELECT * FROM bookings WHERE user_id = ?";
 
         try (Connection conn = DBConnection.getConnection();
@@ -44,7 +41,7 @@ public class BookingRepository {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                bookings.add(new Booking(
+                list.add(new Booking(
                         rs.getInt("id"),
                         rs.getInt("user_id"),
                         rs.getInt("train_id")
@@ -54,7 +51,23 @@ public class BookingRepository {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return list;
+    }
 
-        return bookings;
+
+    public boolean deleteById(int id) {
+        String sql = "DELETE FROM bookings WHERE id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

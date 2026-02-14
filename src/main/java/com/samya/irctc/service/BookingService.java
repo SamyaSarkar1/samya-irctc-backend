@@ -13,7 +13,11 @@ public class BookingService {
         return bookingRepository.create(userId, trainId);
     }
 
-    public List<Booking> getBookingsByUserId(int userId) {
+    public List<Booking> getBookingsByUser(int userId) {
         return bookingRepository.findByUserId(userId);
+    }
+
+    public boolean cancelBooking(int id) {
+        return bookingRepository.deleteById(id);
     }
 }
