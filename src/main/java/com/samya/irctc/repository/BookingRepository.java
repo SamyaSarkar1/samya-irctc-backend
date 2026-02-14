@@ -10,11 +10,24 @@ import java.util.List;
 public class BookingRepository {
 
     public Booking create(int userId, int trainId) {
-        String sql = "INSERT INTO bookings (user_id, train_id) VALUES (?, ?)";
+        String updateSeatSql =
+                "UPDATE trains SET available_seats = available_seats - 1 WHERE id = ? AND available_seats > 0";
+        String insertSql =
+                "INSERT INTO bookings (user_id, train_id) VALUES (?, ?)";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = DBConnection.getConnection()) {
 
+            PreparedStatement seatPs = conn.prepareStatement(updateSeatSql);
+            seatPs.setInt(1, trainId);
+            int rows = seatPs.executeUpdate();
+
+            if (rows == 0) {
+                System.out.println("No seats available!");
+                return null;
+            }
+
+
+            PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, userId);
             ps.setInt(2, trainId);
             ps.executeUpdate();
@@ -29,6 +42,7 @@ public class BookingRepository {
         }
         return null;
     }
+
 
     public List<Booking> findByUserId(int userId) {
         List<Booking> list = new ArrayList<>();
@@ -55,15 +69,33 @@ public class BookingRepository {
     }
 
 
-    public boolean deleteById(int id) {
-        String sql = "DELETE FROM bookings WHERE id = ?";
+    public boolean deleteById(int bookingId) {
+        String getTrainSql = "SELECT train_id FROM bookings WHERE id = ?";
+        String deleteSql = "DELETE FROM bookings WHERE id = ?";
+        String increaseSeatSql =
+                "UPDATE trains SET available_seats = available_seats + 1 WHERE id = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.getConnection()) {
 
-            ps.setInt(1, id);
-            int rows = ps.executeUpdate();
-            return rows > 0;
+
+            PreparedStatement getPs = conn.prepareStatement(getTrainSql);
+            getPs.setInt(1, bookingId);
+            ResultSet rs = getPs.executeQuery();
+
+            if (!rs.next()) return false;
+            int trainId = rs.getInt("train_id");
+
+
+            PreparedStatement deletePs = conn.prepareStatement(deleteSql);
+            deletePs.setInt(1, bookingId);
+            deletePs.executeUpdate();
+
+
+            PreparedStatement incPs = conn.prepareStatement(increaseSeatSql);
+            incPs.setInt(1, trainId);
+            incPs.executeUpdate();
+
+            return true;
 
         } catch (Exception e) {
             e.printStackTrace();
