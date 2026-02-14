@@ -18,17 +18,28 @@ public class BookingServlet extends HttpServlet {
     private final BookingService bookingService = new BookingService();
     private final Gson gson = new Gson();
 
+    static class BookingRequest {
+        int userId;
+        int trainId;
+    }
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         BufferedReader reader = req.getReader();
-        Map<String, Double> body = gson.fromJson(reader, Map.class);
+        BookingRequest bookingRequest = gson.fromJson(reader, BookingRequest.class);
 
-        int userId = body.get("userId").intValue();
-        int trainId = body.get("trainId").intValue();
+        if (bookingRequest == null) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write("{\"error\":\"Invalid request\"}");
+            return;
+        }
 
-        Booking booking = bookingService.bookTicket(userId, trainId);
+        Booking booking = bookingService.bookTicket(
+                bookingRequest.userId,
+                bookingRequest.trainId
+        );
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", booking != null);
