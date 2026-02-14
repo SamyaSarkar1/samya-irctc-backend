@@ -1,5 +1,7 @@
 package com.samya.irctc.filter;
 
+import com.samya.irctc.util.JwtUtil;
+
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
@@ -10,24 +12,36 @@ import java.io.IOException;
 public class AuthFilter implements Filter {
 
     @Override
-    public void doFilter(ServletRequest request,
-                         ServletResponse response,
-                         FilterChain chain)
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
         HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse res = (HttpServletResponse) response;
+        HttpServletResponse resp = (HttpServletResponse) response;
 
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        res.setHeader("Access-Control-Max-Age", "3600");
+        String path = req.getRequestURI();
 
-        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
-            res.setStatus(HttpServletResponse.SC_OK);
+
+        if (path.contains("/api/auth/login") || path.contains("/api/users") || path.contains("/api/trains")) {
+            chain.doFilter(request, response);
             return;
         }
 
-        chain.doFilter(request, response);
+        String authHeader = req.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"error\":\"Missing or invalid Authorization header\"}");
+            return;
+        }
+
+        String token = authHeader.substring(7);
+
+        try {
+            JwtUtil.validateToken(token);
+            chain.doFilter(request, response);
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"error\":\"Invalid or expired token\"}");
+        }
     }
 }
