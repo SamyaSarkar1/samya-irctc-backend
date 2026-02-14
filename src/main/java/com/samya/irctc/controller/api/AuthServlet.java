@@ -3,12 +3,15 @@ package com.samya.irctc.controller.api;
 import com.google.gson.Gson;
 import com.samya.irctc.model.User;
 import com.samya.irctc.service.UserService;
+import com.samya.irctc.util.JwtUtil;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @WebServlet("/api/auth/login")
 public class AuthServlet extends HttpServlet {
@@ -26,12 +29,20 @@ public class AuthServlet extends HttpServlet {
         User user = userService.login(loginUser.getEmail(), loginUser.getPassword());
 
         resp.setContentType("application/json");
+        Map<String, Object> result = new HashMap<>();
 
         if (user != null) {
-            resp.getWriter().write("{\"success\": true}");
+
+            String token = JwtUtil.generateToken(user.getEmail());
+
+            result.put("success", true);
+            result.put("token", token);
         } else {
             resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            resp.getWriter().write("{\"success\": false, \"message\": \"Invalid credentials\"}");
+            result.put("success", false);
+            result.put("message", "Invalid email or password");
         }
+
+        resp.getWriter().write(gson.toJson(result));
     }
 }
