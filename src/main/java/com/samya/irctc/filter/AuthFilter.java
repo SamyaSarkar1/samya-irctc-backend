@@ -21,10 +21,13 @@ public class AuthFilter implements Filter {
         String path = req.getRequestURI();
 
 
-        if (path.contains("/api/auth/login") || path.contains("/api/users") || path.contains("/api/trains")) {
+        if (path.contains("/api/auth/login") ||
+                path.contains("/api/users") ||
+                path.contains("/api/health")) {
             chain.doFilter(request, response);
             return;
         }
+
 
         String authHeader = req.getHeader("Authorization");
 
@@ -36,12 +39,12 @@ public class AuthFilter implements Filter {
 
         String token = authHeader.substring(7);
 
-        try {
-            JwtUtil.validateToken(token);
-            chain.doFilter(request, response);
-        } catch (Exception e) {
+        if (!JwtUtil.validateToken(token)) {
             resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            resp.getWriter().write("{\"error\":\"Invalid or expired token\"}");
+            resp.getWriter().write("{\"error\":\"Invalid token\"}");
+            return;
         }
+
+        chain.doFilter(request, response);
     }
 }
